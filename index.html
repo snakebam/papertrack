@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperTrack</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0b1e;
+      --bg2: #12122a;
+      --card: #1a1a3e;
+      --card-hover: #222255;
+      --border: #2a2a5a;
+      --text: #e4e4f0;
+      --text2: #8888aa;
+      --accent: #7c5cfc;
+      --accent2: #a78bfa;
+      --M: #ff6b6b; --A: #ffa94d; --R: #ffd43b;
+      --C: #51cf66; --K: #339af0; --S: #cc5de8;
+      --good: #22c55e; --mid: #f59e0b; --bad: #ef4444;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, var(--accent), #e040fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding: 1rem 0;
+      white-space: nowrap;
+    }
+    nav { display: flex; gap: 0.25rem; }
+    nav button {
+      background: none;
+      border: none;
+      color: var(--text2);
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    nav button:hover { color: var(--text); }
+    nav button.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+    /* ---- MAIN ---- */
+    main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    section { display: none; animation: fadeIn 0.3s; }
+    section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- CARDS ---- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    /* ---- STATS ROW ---- */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #e040fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-card .stat-label { font-size: 0.8rem; color: var(--text2); margin-top: 0.25rem; }
+
+    /* ---- CHARTS ROW ---- */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .chart-card h3 { font-size: 0.9rem; color: var(--text2); margin-bottom: 1rem; }
+
+    /* ---- PAPERS GRID ---- */
+    .section-title { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text2); }
+    .papers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+    .paper-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .paper-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,92,252,0.1); }
+    .paper-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .paper-card-info { flex: 1; min-width: 0; }
+    .paper-card .paper-name { font-weight: 600; margin-bottom: 0.5rem; }
+    .paper-card .paper-date { font-size: 0.8rem; color: var(--text2); margin-bottom: 0.75rem; }
+    .paper-card .score-bar-bg {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .paper-card .score-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+    .paper-card .paper-score { font-size: 0.85rem; color: var(--text2); }
+    .paper-card .paper-score span { color: var(--text); font-weight: 600; }
+    .marcks-dots { display: flex; gap: 6px; margin-top: 0.75rem; flex-wrap: wrap; }
+    .marcks-dot {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* ---- TAG FILTER ---- */
+    .tag-filter-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .tag-chip {
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .tag-chip:hover { border-color: var(--accent2); color: var(--text); }
+    .tag-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* ---- PAPER CARD TAG LABEL ---- */
+    .paper-tag-label {
+      font-size: 0.7rem;
+      color: var(--accent2);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    /* ---- ATTEMPT BADGE ---- */
+    .attempt-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      background: rgba(124,92,252,0.25);
+      color: var(--accent2);
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-left: 5px;
+      vertical-align: middle;
+      font-weight: 700;
+    }
+
+    /* ---- ADD ATTEMPT BUTTON IN CARD ---- */
+    .card-add-attempt {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 0.75rem;
+      padding: 0.3rem 0.85rem;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text2);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .card-add-attempt:hover { border-color: var(--accent); color: var(--accent2); border-style: solid; }
+
+    /* ---- GRADE BADGE ---- */
+    .grade-badge {
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .grade-letter {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .grade-bound {
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .grade-badge-sm {
+      text-align: center;
+      flex-shrink: 0;
+      min-width: 50px;
+    }
+    .grade-letter-sm {
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .grade-bound-sm {
+      font-size: 0.6rem;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+    .score-grade-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    /* ---- FORMS ---- */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 750px;
+    }
+    .form-card h2 { margin-bottom: 1.5rem; font-size: 1.3rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text2);
+      margin-bottom: 0.4rem;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+    .diff-pair {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .diff-pair input {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      text-align: center;
+    }
+    .diff-pair input:focus { border-color: var(--accent); }
+    .diff-pair .diff-slash {
+      color: var(--text2);
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .diff-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text2);
+      margin-top: 2px;
+      padding: 0 2px;
+    }
+    .marcks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .marcks-input { display: flex; align-items: center; gap: 0.5rem; }
+    .marcks-input .marcks-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      width: 20px;
+      text-align: center;
+    }
+    .marcks-input input {
+      flex: 1;
+      padding: 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      width: 60px;
+    }
+    .marcks-input input:focus { border-color: var(--accent); }
+    .marcks-desc { font-size: 0.7rem; color: var(--text2); }
+
+    .btn {
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-danger { background: var(--bad); color: white; }
+    .btn-danger:hover { opacity: 0.85; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+    /* ---- PAPER BANK ---- */
+    .bank-section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 0.75rem;
+      margin-top: 2rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .bank-section-title:first-child { margin-top: 0; }
+    .bank-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .bank-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .bank-item button {
+      background: none;
+      border: none;
+      color: var(--bad);
+      cursor: pointer;
+      font-size: 1rem;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .bank-item button:hover { opacity: 1; }
+    .add-topic-row { display: flex; gap: 0.5rem; }
+    .add-topic-row input { flex: 1; }
+
+    /* ---- MODAL ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 90vw;
+      max-width: 950px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h2 { font-size: 1.2rem; }
+    .modal-header-meta { font-size: 0.8rem; color: var(--accent2); margin-top: 3px; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 1.5rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* ---- ATTEMPTS SECTION ---- */
+    .attempts-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .attempts-label {
+      font-size: 0.75rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+    .attempts-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .attempt-pill {
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text2);
+      font-family: inherit;
+    }
+    .attempt-pill.active {
+      border-color: var(--accent);
+      background: rgba(124,92,252,0.12);
+      color: var(--accent2);
+      font-weight: 600;
+    }
+    .attempt-pill:hover { border-color: var(--accent2); color: var(--text); }
+    .add-attempt-pill {
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      border: 1px dashed var(--accent);
+      background: transparent;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--accent2);
+      font-family: inherit;
+    }
+    .add-attempt-pill:hover { background: rgba(124,92,252,0.1); border-style: solid; }
+    .add-attempt-pill.active { background: rgba(124,92,252,0.2); border-style: solid; color: var(--accent); font-weight: 600; }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .modal-charts { display: flex; flex-direction: column; gap: 1.5rem; }
+    .modal-fields { display: flex; flex-direction: column; gap: 1rem; }
+    .attempt-heading {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent2);
+      padding: 0.4rem 0.8rem;
+      background: rgba(124,92,252,0.08);
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* ---- SCORE RING ---- */
+    .score-ring {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .score-ring-inner {
+      width: 92px;
+      height: 92px;
+      background: var(--card);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .score-ring-pct { font-size: 1.5rem; font-weight: 700; }
+    .score-ring-label { font-size: 0.6rem; color: var(--text2); }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text2);
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { margin-bottom: 1rem; }
+
+    .actions-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* ---- NOTES EDITOR ---- */
+    .notes-section {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .notes-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 0.5rem;
+      padding: 0.4rem 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .notes-btn {
+      width: 30px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .notes-btn:hover { background: var(--bg); border-color: var(--border); color: var(--text); }
+    .notes-color-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .notes-color-btn:hover { border-color: var(--text); transform: scale(1.2); }
+    .notes-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+    .notes-editor {
+      min-height: 120px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.85rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius) var(--radius);
+      color: var(--text);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .notes-editor:focus { border-color: var(--accent); }
+    .notes-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--text2);
+      pointer-events: none;
+    }
+
+    /* ---- COUNTDOWN BANNER ---- */
+    .countdown-banner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .countdown-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .countdown-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .countdown-card.exam::before { background: linear-gradient(90deg, var(--accent), #e040fb); }
+    .countdown-card.learning::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .countdown-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text2);
+      margin-bottom: 0.3rem;
+    }
+    .countdown-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+    .countdown-days {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 0.15rem;
+    }
+    .countdown-card.exam .countdown-days { color: var(--accent2); }
+    .countdown-card.learning .countdown-days { color: #f59e0b; }
+    .countdown-sub {
+      font-size: 0.75rem;
+      color: var(--text2);
+    }
+    /* Sub-chapter tracker inside learning card */
+    .chapter-tracker { margin-top: 0.9rem; border-top: 1px solid var(--border); padding-top: 0.8rem; }
+    .chapter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .chapter-header-left { font-size: 0.82rem; color: var(--text); }
+    .chapter-header-left strong { color: var(--accent2); }
+    .chapter-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .chapter-input {
+      width: 48px;
+      padding: 0.25rem 0.4rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.82rem;
+      text-align: center;
+      outline: none;
+      font-family: inherit;
+    }
+    .chapter-input:focus { border-color: var(--accent); }
+    .chapter-set-btn {
+      padding: 0.2rem 0.6rem;
+      font-size: 0.72rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chapter-set-btn:hover { opacity: 0.85; }
+    .chapter-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .chapter-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--accent), #e040fb);
+      transition: width 0.4s ease;
+    }
+    .chapter-pace {
+      font-size: 0.72rem;
+      color: var(--text2);
+      margin-top: 0.35rem;
+    }
+    .chapter-pace strong { color: var(--accent2); }
+    /* Papers pace in stat card */
+    .papers-pace {
+      font-size: 0.68rem;
+      color: var(--text2);
+      margin-top: 0.2rem;
+    }
+    .papers-pace strong { color: var(--accent2); }
+    @media (max-width: 768px) {
+      .countdown-banner { grid-template-columns: 1fr; }
+    }
+
+    /* ---- TASKS ---- */
+    .paper-tasks-list { margin-top: 0.75rem; }
+    .paper-task-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .paper-task-item:hover { background: rgba(124,92,252,0.06); }
+    .paper-task-item.completed { text-decoration: line-through; color: var(--text2); }
+    .paper-task-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 15px; height: 15px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .paper-task-item .task-text { flex: 1; }
+    .paper-task-item .task-date { font-size: 0.7rem; color: var(--text2); white-space: nowrap; }
+    .paper-task-item .task-delete {
+      background: none; border: none; color: var(--text2);
+      cursor: pointer; font-size: 0.85rem; opacity: 0;
+      transition: opacity 0.15s; padding: 0 4px;
+    }
+    .paper-task-item:hover .task-delete { opacity: 0.6; }
+    .paper-task-item .task-delete:hover { opacity: 1; color: var(--bad); }
+    .notes-add-task-btn { font-size: 1rem; font-weight: 700; color: var(--accent2); }
+    .notes-add-task-btn:hover { color: var(--accent); }
+    .tasks-bar { margin-bottom: 2rem; }
+    .tasks-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .tasks-tab-row { display: flex; gap: 0.35rem; }
+    .tasks-list { display: flex; flex-direction: column; gap: 0.25rem; }
+    .dash-task-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dash-task-item:hover { border-color: var(--accent); background: var(--card); }
+    .dash-task-item.completed { opacity: 0.6; }
+    .dash-task-item.completed .dash-task-text { text-decoration: line-through; color: var(--text2); }
+    .dash-task-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px; height: 16px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .dash-task-text { flex: 1; font-size: 0.88rem; }
+    .dash-task-paper {
+      font-size: 0.72rem; color: var(--accent2);
+      white-space: nowrap; max-width: 160px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .dash-task-date { font-size: 0.72rem; color: var(--text2); white-space: nowrap; }
+
+    /* ---- CLOUD SYNC ---- */
+    .cloud-btn {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); font-size: 1.1rem; cursor: pointer;
+      padding: 0.3rem 0.6rem; transition: all 0.2s; position: relative;
+    }
+    .cloud-btn:hover { border-color: var(--accent); color: var(--accent2); }
+    .cloud-btn.synced { color: var(--good); border-color: var(--good); }
+    .cloud-dot {
+      position: absolute; top: 3px; right: 3px;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+      display: none;
+    }
+    .cloud-btn.synced .cloud-dot { display: block; }
+    .cloud-panel-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 1000; display: none; align-items: flex-start; justify-content: center;
+      padding-top: 80px;
+    }
+    .cloud-panel-overlay.open { display: flex; }
+    .cloud-panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; width: 420px; max-width: 90vw;
+    }
+    .cloud-panel h3 { margin-bottom: 1rem; font-size: 1.05rem; }
+    .cloud-panel label { font-size: 0.78rem; color: var(--text2); display: block; margin-bottom: 0.3rem; }
+    .cloud-panel input[type="text"] {
+      width: 100%; padding: 0.5rem 0.7rem; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 0.85rem; outline: none; font-family: inherit;
+      margin-bottom: 0.8rem;
+    }
+    .cloud-panel input[type="text"]:focus { border-color: var(--accent); }
+    .cloud-panel .btn-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .cloud-panel .btn-sm {
+      padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 6px; border: none;
+      cursor: pointer; font-family: inherit; font-weight: 600;
+    }
+    .cloud-panel .btn-connect { background: var(--accent); color: #fff; }
+    .cloud-panel .btn-connect:hover { opacity: 0.85; }
+    .cloud-panel .btn-disconnect { background: var(--bad); color: #fff; }
+    .cloud-panel .btn-disconnect:hover { opacity: 0.85; }
+    .cloud-panel .btn-close { background: var(--border); color: var(--text); }
+    .cloud-panel .btn-close:hover { opacity: 0.85; }
+    .share-link-row {
+      display: flex; gap: 0.4rem; align-items: center;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.45rem 0.6rem; margin: 0.8rem 0;
+    }
+    .share-link-row input {
+      flex: 1; background: none; border: none; color: var(--accent2);
+      font-size: 0.78rem; outline: none; font-family: monospace;
+    }
+    .share-link-row button {
+      background: var(--accent); color: #fff; border: none; border-radius: 4px;
+      padding: 0.25rem 0.6rem; font-size: 0.7rem; cursor: pointer; font-family: inherit;
+      white-space: nowrap;
+    }
+    .share-link-row button:hover { opacity: 0.85; }
+    .cloud-status { font-size: 0.78rem; color: var(--text2); margin-top: 0.5rem; }
+    .cloud-status .green { color: var(--good); }
+    .cloud-error { color: var(--bad); font-size: 0.78rem; margin-top: 0.3rem; display: none; }
+
+    /* Viewer mode */
+    .viewer-banner {
+      background: linear-gradient(135deg, var(--accent), #e040fb);
+      color: #fff; text-align: center; padding: 0.6rem 1rem;
+      font-size: 0.85rem; font-weight: 600; display: none;
+    }
+    .viewer-banner span { font-weight: 400; opacity: 0.85; font-size: 0.78rem; }
+    .viewer-mode .viewer-banner { display: block; }
+    .viewer-mode .hide-in-viewer { display: none !important; }
+    .viewer-mode .paper-task-item input[type="checkbox"],
+    .viewer-mode .dash-task-item input[type="checkbox"] { pointer-events: none; }
+    .viewer-mode .chapter-edit-row { display: none !important; }
+    .viewer-mode .notes-add-task-btn { display: none !important; }
+    .viewer-mode .task-delete { display: none !important; }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 0; padding: 0 1rem; }
+      main { padding: 1rem; }
+      .charts-row { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .marcks-grid { grid-template-columns: 1fr 1fr; }
+      .modal-body { grid-template-columns: 1fr; }
+      .score-grade-row { flex-direction: column; gap: 1rem; }
+      .cloud-panel { width: 95vw; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="viewer-banner" id="viewer-banner">
+  Viewing Jacob's PaperTrack <span>— refreshes automatically</span>
+</div>
+
+<header>
+  <h1>PaperTrack</h1>
+  <nav id="nav">
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="log" class="hide-in-viewer">+ Log Paper</button>
+    <button data-view="bank" class="hide-in-viewer">Paper Bank</button>
+  </nav>
+  <button class="cloud-btn hide-in-viewer" id="cloud-btn" onclick="openCloudPanel()" title="Cloud Sync">
+    &#9729;<span class="cloud-dot"></span>
+  </button>
+</header>
+
+<!-- Cloud Sync Panel -->
+<div class="cloud-panel-overlay" id="cloud-panel-overlay" onclick="if(event.target===this)closeCloudPanel()">
+  <div class="cloud-panel">
+    <h3>&#9729; Cloud Sync</h3>
+    <div id="cloud-setup" style="display:none;">
+      <label>JSONBin.io API Key (X-Master-Key)</label>
+      <input type="text" id="cloud-api-key" placeholder="Paste your API key here...">
+      <div class="btn-row">
+        <button class="btn-sm btn-connect" onclick="connectCloud()">Connect</button>
+        <button class="btn-sm btn-close" onclick="closeCloudPanel()">Cancel</button>
+      </div>
+      <div class="cloud-error" id="cloud-error"></div>
+    </div>
+    <div id="cloud-connected" style="display:none;">
+      <div class="cloud-status"><span class="green">&#10003;</span> Connected &amp; syncing</div>
+      <label style="margin-top:0.8rem;">Share this link with your mum:</label>
+      <div class="share-link-row">
+        <input type="text" id="share-link" readonly>
+        <button onclick="copyShareLink()">Copy</button>
+      </div>
+      <div class="cloud-status" id="last-synced"></div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn-sm btn-disconnect" onclick="disconnectCloud()">Disconnect</button>
+        <button class="btn-sm btn-close" onclick="closeCloudPanel()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <!-- DASHBOARD -->
+  <section id="dashboard-view" class="active">
+    <div class="countdown-banner" id="countdown-banner"></div>
+    <div class="stats-row" id="stats-row"></div>
+    <div class="charts-row" id="dashboard-charts">
+      <div class="chart-card">
+        <h3>Score Trend</h3>
+        <canvas id="trend-chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Marks Lost by Category (All Papers)</h3>
+        <canvas id="marcks-overview-chart"></canvas>
+      </div>
+    </div>
+    <div class="tasks-bar card" id="tasks-bar" style="display:none;">
+      <div class="tasks-bar-header">
+        <div class="section-title" style="margin-bottom:0;">Tasks</div>
+        <div class="tasks-tab-row">
+          <button class="tag-chip active" id="tasks-tab-active" onclick="setTasksTab('active')">Active</button>
+          <button class="tag-chip" id="tasks-tab-completed" onclick="setTasksTab('completed')">Completed</button>
+        </div>
+      </div>
+      <div class="tasks-list" id="tasks-list"></div>
+      <div class="tasks-empty" id="tasks-empty" style="display:none;">
+        <span style="color:var(--text2); font-size:0.85rem;">No tasks yet. Add tasks from paper notes.</span>
+      </div>
+    </div>
+    <div class="section-title">Your Papers</div>
+    <div class="tag-filter-row" id="tag-filter-row"></div>
+    <div class="papers-grid" id="papers-grid"></div>
+  </section>
+
+  <!-- LOG PAPER -->
+  <section id="log-view">
+    <div class="form-card">
+      <h2>Log a Paper</h2>
+      <form id="log-form">
+        <div class="form-group">
+          <label>Paper Topic</label>
+          <select id="paper-select">
+            <option value="">-- Select from bank --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Custom Name (or override)</label>
+          <input type="text" id="paper-name" placeholder="e.g. Biological molecules: Carbohydrates">
+        </div>
+        <div class="form-group">
+          <label>Tag</label>
+          <select id="paper-tag">
+            <option value="">-- No tag --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="paper-date">
+        </div>
+
+        <div class="section-title" style="margin-top:1.5rem;">Marks by Difficulty</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Easy</label>
+            <div class="diff-pair">
+              <input type="number" id="easy-scored" min="0" step="0.5" placeholder="0">
+              <span class="diff-slash">/</span>
+              <input type="number" id="easy-total" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+          <div class="form-group">
+            <label>Medium</label>
+            <div class="diff-pair">
+              <input type="number" id="medium-scored" min="0" step="0.5" placeholder="0">
+              <span class="diff-slash">/</span>
+              <input type="number" id="medium-total" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+          <div class="form-group">
+            <label>Hard</label>
+            <div class="diff-pair">
+              <input type="number" id="hard-scored" min="0" step="0.5" placeholder="0">
+              <span class="diff-slash">/</span>
+              <input type="number" id="hard-total" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:1.5rem;">MARCKS (Marks Lost)</div>
+        <div class="marcks-grid">
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--M)">M</span>
+              <input type="number" id="m-maths" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Maths Error</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--A)">A</span>
+              <input type="number" id="m-application" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Application</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--R)">R</span>
+              <input type="number" id="m-read" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Read Question</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--C)">C</span>
+              <input type="number" id="m-communication" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Communication</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--K)">K</span>
+              <input type="number" id="m-knowledge" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Knowledge</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--S)">S</span>
+              <input type="number" id="m-statements" min="0" step="0.5" placeholder="0">
+            </div>
+            <div class="marcks-desc">Statements</div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button type="submit" class="btn btn-primary">Save Paper</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- PAPER BANK -->
+  <section id="bank-view">
+    <div class="form-card">
+      <h2>Paper Bank &amp; Tags</h2>
+
+      <div class="bank-section-title">Topics (Paper Bank)</div>
+      <div class="bank-list" id="bank-list"></div>
+      <div class="add-topic-row">
+        <input type="text" id="new-topic" placeholder="Add new topic...">
+        <button class="btn btn-primary" id="add-topic-btn">Add</button>
+      </div>
+
+      <div class="bank-section-title">Tags</div>
+      <div class="bank-list" id="tags-list"></div>
+      <div class="add-topic-row">
+        <input type="text" id="new-tag" placeholder="Add new tag (e.g. Bio Paper 1)...">
+        <button class="btn btn-primary" id="add-tag-btn">Add</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- PAPER DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-title">Paper Details</h2>
+        <div class="modal-header-meta" id="modal-tag-display"></div>
+      </div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+
+    <!-- Attempts timeline -->
+    <div class="attempts-section">
+      <div class="attempts-label">Attempts</div>
+      <div class="attempts-pills" id="attempts-pills"></div>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-charts">
+        <div class="chart-card">
+          <div class="score-grade-row" id="score-grade-row">
+            <div class="score-ring" id="score-ring">
+              <div class="score-ring-inner">
+                <div class="score-ring-pct" id="score-pct">0%</div>
+                <div class="score-ring-label">Score</div>
+              </div>
+            </div>
+            <div class="grade-badge">
+              <div class="grade-letter" id="modal-grade-letter">-</div>
+              <div class="grade-bound" id="modal-grade-bound"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>MARCKS Breakdown</h3>
+          <canvas id="modal-marcks-chart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Marks by Difficulty</h3>
+          <canvas id="modal-diff-chart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Weakness Radar</h3>
+          <canvas id="modal-radar-chart"></canvas>
+        </div>
+      </div>
+      <div class="modal-fields">
+        <div class="attempt-heading" id="attempt-heading"></div>
+        <div class="form-group">
+          <label>Paper Name</label>
+          <input type="text" id="edit-name">
+        </div>
+        <div class="form-group">
+          <label id="edit-date-label">Attempt Date</label>
+          <input type="date" id="edit-date">
+        </div>
+        <div class="section-title">Marks by Difficulty</div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="form-group">
+            <label>Easy</label>
+            <div class="diff-pair">
+              <input type="number" id="edit-easyScored" min="0" step="0.5">
+              <span class="diff-slash">/</span>
+              <input type="number" id="edit-easyTotal" min="0" step="0.5">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+          <div class="form-group">
+            <label>Medium</label>
+            <div class="diff-pair">
+              <input type="number" id="edit-mediumScored" min="0" step="0.5">
+              <span class="diff-slash">/</span>
+              <input type="number" id="edit-mediumTotal" min="0" step="0.5">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+          <div class="form-group">
+            <label>Hard</label>
+            <div class="diff-pair">
+              <input type="number" id="edit-hardScored" min="0" step="0.5">
+              <span class="diff-slash">/</span>
+              <input type="number" id="edit-hardTotal" min="0" step="0.5">
+            </div>
+            <div class="diff-label-row"><span>scored</span><span>total</span></div>
+          </div>
+        </div>
+        <div class="section-title">MARCKS (Marks Lost)</div>
+        <div class="marcks-grid" style="grid-template-columns:1fr 1fr;">
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--M)">M</span>
+              <input type="number" id="edit-M" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Maths Error</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--A)">A</span>
+              <input type="number" id="edit-A" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Application</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--R)">R</span>
+              <input type="number" id="edit-R" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Read Question</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--C)">C</span>
+              <input type="number" id="edit-C" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Communication</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--K)">K</span>
+              <input type="number" id="edit-K" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Knowledge</div>
+          </div>
+          <div>
+            <div class="marcks-input">
+              <span class="marcks-label" style="color:var(--S)">S</span>
+              <input type="number" id="edit-S" min="0" step="0.5">
+            </div>
+            <div class="marcks-desc">Statements</div>
+          </div>
+        </div>
+        <div class="actions-row hide-in-viewer">
+          <button class="btn btn-primary" id="save-edit-btn">Save Changes</button>
+          <button class="btn btn-danger" id="delete-paper-btn">Delete Paper</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="notes-section">
+      <div class="section-title">Notes</div>
+      <div class="notes-toolbar">
+        <button class="notes-btn" onmousedown="event.preventDefault(); execNotes('bold')" title="Bold"><b>B</b></button>
+        <button class="notes-btn" onmousedown="event.preventDefault(); execNotes('italic')" title="Italic"><i>I</i></button>
+        <button class="notes-btn" onmousedown="event.preventDefault(); execNotes('underline')" title="Underline"><u>U</u></button>
+        <span class="notes-divider"></span>
+        <button class="notes-color-btn" style="background:#ff6b6b" onmousedown="event.preventDefault(); execNotesColor('#ff6b6b')" title="M - Maths Error"></button>
+        <button class="notes-color-btn" style="background:#ffa94d" onmousedown="event.preventDefault(); execNotesColor('#ffa94d')" title="A - Application"></button>
+        <button class="notes-color-btn" style="background:#ffd43b" onmousedown="event.preventDefault(); execNotesColor('#ffd43b')" title="R - Read Question"></button>
+        <button class="notes-color-btn" style="background:#51cf66" onmousedown="event.preventDefault(); execNotesColor('#51cf66')" title="C - Communication"></button>
+        <button class="notes-color-btn" style="background:#339af0" onmousedown="event.preventDefault(); execNotesColor('#339af0')" title="K - Knowledge"></button>
+        <button class="notes-color-btn" style="background:#cc5de8" onmousedown="event.preventDefault(); execNotesColor('#cc5de8')" title="S - Statements"></button>
+        <span class="notes-divider"></span>
+        <button class="notes-btn" onmousedown="event.preventDefault(); execNotesColor('#e4e4f0')" title="Default color" style="font-size:0.7rem;">Aa</button>
+        <span class="notes-divider"></span>
+        <button class="notes-btn notes-add-task-btn" onmousedown="event.preventDefault(); insertTaskAtCursor()" title="Add Task">+</button>
+      </div>
+      <div class="notes-editor" id="notes-editor" contenteditable="true" data-placeholder="Add notes about this paper..."></div>
+      <div class="paper-tasks-list" id="paper-tasks-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CLOUD SYNC VARS (early init to avoid TDZ) ============
+const JSONBIN_API = 'https://api.jsonbin.io/v3/b';
+let cloudSyncTimer = null;
+let isViewerMode = false;
+
+// ============ STATE ============
+const DEFAULT_BANK = [
+  "Biological molecules: Lipids",
+  "Biological molecules: Proteins",
+  "Biological molecules: Enzymes",
+  "Nucleic acids: Structure & DNA replication",
+  "ATP, Water & Inorganic ions"
+];
+
+const DEFAULT_TAGS = [
+  "Bio Paper 1", "Bio Paper 2", "Bio Paper 3",
+  "Chem Paper 1", "Chem Paper 2", "Chem Paper 3",
+  "Physics Paper 1", "Physics Paper 2", "Physics Paper 3"
+];
+
+function loadState() {
+  const raw = localStorage.getItem("papertrack");
+  if (raw) {
+    const s = JSON.parse(raw);
+
+    s.papers.forEach(p => {
+      // Step 1: old format migration (easy/medium/hard flat -> easyTotal etc.)
+      if (p.easyTotal === undefined && !p.attempts) {
+        p.easyTotal = p.easy || 0;
+        p.mediumTotal = p.medium || 0;
+        p.hardTotal = p.hard || 0;
+        const total = p.easyTotal + p.mediumTotal + p.hardTotal;
+        const ach = p.achieved || 0;
+        if (total > 0) {
+          p.easyScored = Math.round((p.easyTotal / total) * ach * 2) / 2;
+          p.mediumScored = Math.round((p.mediumTotal / total) * ach * 2) / 2;
+          p.hardScored = Math.round((ach - p.easyScored - p.mediumScored) * 2) / 2;
+        } else {
+          p.easyScored = 0; p.mediumScored = 0; p.hardScored = 0;
+        }
+        delete p.easy; delete p.medium; delete p.hard; delete p.achieved;
+      }
+
+      // Ensure notes field exists
+      if (p.notes === undefined) p.notes = '';
+
+      // Step 2: flat scoring fields -> attempts array
+      if (!p.attempts) {
+        p.tag = p.tag || '';
+        p.attempts = [{
+          date: p.date || '',
+          easyScored: p.easyScored || 0,
+          easyTotal: p.easyTotal || 0,
+          mediumScored: p.mediumScored || 0,
+          mediumTotal: p.mediumTotal || 0,
+          hardScored: p.hardScored || 0,
+          hardTotal: p.hardTotal || 0,
+          marcks: p.marcks || { M:0, A:0, R:0, C:0, K:0, S:0 }
+        }];
+        delete p.date;
+        delete p.easyScored; delete p.easyTotal;
+        delete p.mediumScored; delete p.mediumTotal;
+        delete p.hardScored; delete p.hardTotal;
+        delete p.marcks;
+      }
+    });
+
+    if (!s.tags) s.tags = [...DEFAULT_TAGS];
+    if (!s.tasks) s.tasks = [];
+    if (s.subChaptersDone === undefined) s.subChaptersDone = 30;
+    return s;
+  }
+  return { bank: [...DEFAULT_BANK], tags: [...DEFAULT_TAGS], papers: [], tasks: [], subChaptersDone: 30 };
+}
+
+function saveState() {
+  localStorage.setItem("papertrack", JSON.stringify(state));
+  scheduleCloudSync();
+}
+let state = loadState();
+saveState();
+
+const MARCKS_META = {
+  M: { label: "Maths Error", color: "#ff6b6b" },
+  A: { label: "Application", color: "#ffa94d" },
+  R: { label: "Read Question", color: "#ffd43b" },
+  C: { label: "Communication", color: "#51cf66" },
+  K: { label: "Knowledge", color: "#339af0" },
+  S: { label: "Statements", color: "#cc5de8" }
+};
+
+const GRADE_BOUNDARIES = [
+  { grade: "A*", min: 73.8, color: "#FFD700" },
+  { grade: "A",  min: 63.5, color: "#22c55e" },
+  { grade: "B",  min: 53.5, color: "#3b82f6" },
+  { grade: "C",  min: 43.5, color: "#14b8a6" },
+  { grade: "D",  min: 33.5, color: "#f59e0b" },
+  { grade: "E",  min: 23.8, color: "#ef4444" },
+  { grade: "U",  min: 0,    color: "#6b7280" }
+];
+
+function getGrade(pct) {
+  for (let i = 0; i < GRADE_BOUNDARIES.length; i++) {
+    const b = GRADE_BOUNDARIES[i];
+    if (pct >= b.min) {
+      const ceiling = (i === 0) ? 100 : GRADE_BOUNDARIES[i - 1].min;
+      const mid = (b.min + ceiling) / 2;
+      const bound = pct >= mid ? "Upper" : "Lower";
+      return { grade: b.grade, color: b.color, bound: bound + " Bound" };
+    }
+  }
+  return { grade: "U", color: "#6b7280", bound: "" };
+}
+
+// ============ HELPERS ============
+function latestAttempt(p) { return p.attempts[p.attempts.length - 1]; }
+function totalMarks(a) { return a.easyTotal + a.mediumTotal + a.hardTotal; }
+function achieved(a) { return a.easyScored + a.mediumScored + a.hardScored; }
+function scorePct(a) { const t = totalMarks(a); return t > 0 ? (achieved(a) / t) * 100 : 0; }
+function paperScorePct(p) { return scorePct(latestAttempt(p)); }
+function scoreColor(pct) {
+  if (pct >= 80) return "var(--good)";
+  if (pct >= 60) return "var(--mid)";
+  return "var(--bad)";
+}
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function formatDate(d) {
+  if (!d) return "";
+  const dt = new Date(d + "T00:00:00");
+  return dt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ============ NAVIGATION ============
+const navBtns = document.querySelectorAll("nav button");
+const sections = document.querySelectorAll("main section");
+
+function switchView(view) {
+  navBtns.forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  sections.forEach(s => s.classList.toggle("active", s.id === view + "-view"));
+  if (view === "dashboard") renderDashboard();
+  if (view === "bank") renderBank();
+  if (view === "log") populateSelects();
+}
+navBtns.forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
+
+// ============ PAPER BANK ============
+function renderBank() {
+  const list = document.getElementById("bank-list");
+  list.innerHTML = state.bank.length ? state.bank.map((t, i) => `
+    <div class="bank-item">
+      <span>${t}</span>
+      <button onclick="removeTopic(${i})">&times;</button>
+    </div>
+  `).join("") : '<div style="color:var(--text2);font-size:0.85rem;padding:0.5rem 0;">No topics yet.</div>';
+
+  const tagsList = document.getElementById("tags-list");
+  tagsList.innerHTML = state.tags.length ? state.tags.map((t, i) => `
+    <div class="bank-item">
+      <span>${t}</span>
+      <button onclick="removeTag(${i})">&times;</button>
+    </div>
+  `).join("") : '<div style="color:var(--text2);font-size:0.85rem;padding:0.5rem 0;">No tags yet.</div>';
+}
+
+function removeTopic(i) { state.bank.splice(i, 1); saveState(); renderBank(); populateSelects(); }
+function removeTag(i) { state.tags.splice(i, 1); saveState(); renderBank(); populateSelects(); }
+
+document.getElementById("add-topic-btn").addEventListener("click", () => {
+  const input = document.getElementById("new-topic");
+  const val = input.value.trim();
+  if (val && !state.bank.includes(val)) {
+    state.bank.push(val);
+    saveState(); renderBank(); populateSelects(); input.value = "";
+  }
+});
+document.getElementById("new-topic").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("add-topic-btn").click(); }
+});
+
+document.getElementById("add-tag-btn").addEventListener("click", () => {
+  const input = document.getElementById("new-tag");
+  const val = input.value.trim();
+  if (val && !state.tags.includes(val)) {
+    state.tags.push(val);
+    saveState(); renderBank(); populateSelects(); input.value = "";
+  }
+});
+document.getElementById("new-tag").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("add-tag-btn").click(); }
+});
+
+// ============ LOG FORM ============
+function populateSelects() {
+  const sel = document.getElementById("paper-select");
+  sel.innerHTML = '<option value="">-- Select from bank --</option>' +
+    state.bank.map(t => `<option value="${t}">${t}</option>`).join("");
+
+  const tagSel = document.getElementById("paper-tag");
+  tagSel.innerHTML = '<option value="">-- No tag --</option>' +
+    state.tags.map(t => `<option value="${t}">${t}</option>`).join("");
+}
+// alias for backward compat
+function populateSelect() { populateSelects(); }
+
+document.getElementById("paper-select").addEventListener("change", function() {
+  if (this.value) document.getElementById("paper-name").value = this.value;
+});
+document.getElementById("paper-date").valueAsDate = new Date();
+
+document.getElementById("log-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const name = document.getElementById("paper-name").value.trim() ||
+               document.getElementById("paper-select").value;
+  if (!name) return alert("Please enter a paper name.");
+
+  const paper = {
+    id: Date.now(),
+    name,
+    tag: document.getElementById("paper-tag").value,
+    notes: '',
+    attempts: [{
+      date: document.getElementById("paper-date").value,
+      easyScored: num("easy-scored"),
+      easyTotal: num("easy-total"),
+      mediumScored: num("medium-scored"),
+      mediumTotal: num("medium-total"),
+      hardScored: num("hard-scored"),
+      hardTotal: num("hard-total"),
+      marcks: {
+        M: num("m-maths"), A: num("m-application"), R: num("m-read"),
+        C: num("m-communication"), K: num("m-knowledge"), S: num("m-statements")
+      }
+    }]
+  };
+  state.papers.push(paper);
+  saveState();
+  this.reset();
+  document.getElementById("paper-date").valueAsDate = new Date();
+  switchView("dashboard");
+});
+
+// ============ DASHBOARD ============
+let trendChart, overviewChart;
+let activeTag = null;
+
+function renderDashboard() {
+  renderCountdown();
+  renderStats();
+  renderTagFilter();
+  renderTasksBar();
+  renderPapersGrid();
+  renderDashboardCharts();
+}
+
+const EXAM_DATE = new Date('2026-06-04');
+const LEARNING_DEADLINE = new Date('2026-04-04');
+const TOTAL_SUB_CHAPTERS = 94;
+const TOTAL_PAPERS_TARGET = 40;
+
+function daysUntil(target) {
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const t = new Date(target);
+  t.setHours(0,0,0,0);
+  return Math.ceil((t - now) / (1000 * 60 * 60 * 24));
+}
+
+function renderCountdown() {
+  const examDays = daysUntil(EXAM_DATE);
+  const learnDays = daysUntil(LEARNING_DEADLINE);
+  const done = state.subChaptersDone || 0;
+  const remaining = TOTAL_SUB_CHAPTERS - done;
+  const pct = Math.round((done / TOTAL_SUB_CHAPTERS) * 100);
+  const perDay = learnDays > 0 ? (remaining / learnDays).toFixed(1) : remaining > 0 ? '---' : '0';
+
+  document.getElementById("countdown-banner").innerHTML = `
+    <div class="countdown-card exam">
+      <div class="countdown-label">AQA Biology Paper 1</div>
+      <div class="countdown-title">June 4th 2026</div>
+      <div class="countdown-days">${examDays}</div>
+      <div class="countdown-sub">days remaining</div>
+    </div>
+    <div class="countdown-card learning">
+      <div class="countdown-label">Learning Deadline</div>
+      <div class="countdown-title">April 4th 2026 — All Sub-Chapters</div>
+      <div class="countdown-days">${learnDays > 0 ? learnDays : 'NOW'}</div>
+      <div class="countdown-sub">${learnDays > 0 ? 'days to finish learning' : 'deadline reached'}</div>
+      <div class="chapter-tracker">
+        <div class="chapter-header">
+          <span class="chapter-header-left"><strong>${done}</strong> / ${TOTAL_SUB_CHAPTERS} sub-chapters done</span>
+          <div class="chapter-edit-row">
+            <input type="number" class="chapter-input" id="chapter-input" value="${done}" min="0" max="${TOTAL_SUB_CHAPTERS}">
+            <button class="chapter-set-btn" onclick="updateSubChapters()">Set</button>
+          </div>
+        </div>
+        <div class="chapter-progress-bar">
+          <div class="chapter-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="chapter-pace">~<strong>${perDay}</strong> sub-chapters / day to finish by April 4th</div>
+      </div>
+    </div>
+  `;
+}
+
+function updateSubChapters() {
+  const input = document.getElementById('chapter-input');
+  const val = Math.max(0, Math.min(TOTAL_SUB_CHAPTERS, parseInt(input.value) || 0));
+  state.subChaptersDone = val;
+  saveState();
+  renderCountdown();
+}
+
+function renderStats() {
+  const papers = state.papers;
+  const total = papers.length;
+  const avgScore = total ? papers.reduce((s, p) => s + paperScorePct(p), 0) / total : 0;
+  const avgGrade = total ? getGrade(avgScore) : null;
+  const totalLost = {};
+  Object.keys(MARCKS_META).forEach(k => totalLost[k] = 0);
+  papers.forEach(p => {
+    const a = latestAttempt(p);
+    Object.keys(a.marcks).forEach(k => totalLost[k] += a.marcks[k]);
+  });
+  const worst = Object.entries(totalLost).sort((a, b) => b[1] - a[1])[0];
+
+  // Papers per week calculation
+  const examDays = daysUntil(EXAM_DATE);
+  const weeksLeft = examDays / 7;
+  const papersRemaining = TOTAL_PAPERS_TARGET - total;
+  const papersPerWeek = weeksLeft > 0 ? (papersRemaining / weeksLeft).toFixed(1) : '---';
+
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${total}<span style="font-size:0.55em; color:var(--text2);">/${TOTAL_PAPERS_TARGET}</span></div>
+      <div class="stat-label">Papers Done</div>
+      <div class="papers-pace">~<strong>${papersPerWeek}</strong> papers/week needed</div>
+    </div>
+    <div class="stat-card"><div class="stat-value">${total ? avgScore.toFixed(0) + "%" : "-"}</div><div class="stat-label">Avg Score</div></div>
+    <div class="stat-card">
+      <div class="stat-value" style="-webkit-text-fill-color:${avgGrade ? avgGrade.color : ''}">${avgGrade ? avgGrade.grade : "-"}</div>
+      <div class="stat-label">Avg Grade (AQA 2025)</div>
+    </div>
+    <div class="stat-card"><div class="stat-value">${worst && worst[1] > 0 ? worst[0] : "-"}</div><div class="stat-label">Biggest Weakness</div></div>
+  `;
+}
+
+function renderTagFilter() {
+  const usedTags = [...new Set(state.papers.map(p => p.tag).filter(Boolean))];
+  const row = document.getElementById("tag-filter-row");
+  if (!usedTags.length) { row.innerHTML = ""; return; }
+  row.innerHTML = `
+    <button class="tag-chip ${activeTag === null ? 'active' : ''}" onclick="setTagFilter(null)">All</button>
+    ${usedTags.map(t => `<button class="tag-chip ${activeTag === t ? 'active' : ''}" onclick="setTagFilter(${JSON.stringify(t)})">${t}</button>`).join("")}
+  `;
+}
+
+function setTagFilter(tag) {
+  activeTag = tag;
+  renderTagFilter();
+  renderPapersGrid();
+}
+
+function renderPapersGrid() {
+  const grid = document.getElementById("papers-grid");
+  const papers = activeTag ? state.papers.filter(p => p.tag === activeTag) : state.papers;
+
+  if (!papers.length) {
+    grid.innerHTML = state.papers.length
+      ? `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏷️</div><p>No papers with this tag.</p></div>`
+      : `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📝</div><p>No papers logged yet.</p><button class="btn btn-primary" onclick="switchView('log')">Log Your First Paper</button></div>`;
+    return;
+  }
+
+  grid.innerHTML = [...papers].reverse().map(p => {
+    const a = latestAttempt(p);
+    const pct = scorePct(a);
+    const tot = totalMarks(a);
+    const ach = achieved(a);
+    const g = getGrade(pct);
+    const dots = Object.entries(a.marcks)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `<span class="marcks-dot" style="background:${MARCKS_META[k].color}22;color:${MARCKS_META[k].color}">${k}${v}</span>`)
+      .join("");
+    const attemptCount = p.attempts.length;
+
+    return `<div class="paper-card" onclick="openPaper(${p.id})">
+      ${p.tag ? `<div class="paper-tag-label">${p.tag}</div>` : ''}
+      <div class="paper-card-top">
+        <div class="paper-card-info">
+          <div class="paper-name">${p.name}${attemptCount > 1 ? `<span class="attempt-badge">×${attemptCount}</span>` : ''}</div>
+          <div class="paper-date">${formatDate(a.date)}</div>
+        </div>
+        <div class="grade-badge-sm">
+          <div class="grade-letter-sm" style="color:${g.color}">${g.grade}</div>
+          <div class="grade-bound-sm">${g.bound.replace(' Bound','')}</div>
+        </div>
+      </div>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%;background:${scoreColor(pct)}"></div></div>
+      <div class="paper-score"><span>${ach}</span> / ${tot} marks (${pct.toFixed(0)}%)</div>
+      <div class="marcks-dots">${dots}</div>
+      <button class="card-add-attempt hide-in-viewer" onclick="event.stopPropagation(); openPaper(${p.id}, 'add')">+ add attempt</button>
+    </div>`;
+  }).join("");
+}
+
+function renderDashboardCharts() {
+  const papers = state.papers;
+  if (!papers.length) {
+    document.getElementById("dashboard-charts").style.display = "none";
+    return;
+  }
+  document.getElementById("dashboard-charts").style.display = "";
+
+  const ctx1 = document.getElementById("trend-chart");
+  if (trendChart) trendChart.destroy();
+  const sorted = [...papers].sort((a, b) => latestAttempt(a).date.localeCompare(latestAttempt(b).date));
+  trendChart = new Chart(ctx1, {
+    type: "line",
+    data: {
+      labels: sorted.map(p => p.name.split(":").pop().trim().substring(0, 16)),
+      datasets: [{
+        label: "Score %",
+        data: sorted.map(p => paperScorePct(p).toFixed(1)),
+        borderColor: "#7c5cfc",
+        backgroundColor: "rgba(124,92,252,0.1)",
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: sorted.map(p => scoreColor(paperScorePct(p))),
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { min: 0, max: 100, ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
+        x: { ticks: { color: "#8888aa", maxRotation: 45 }, grid: { display: false } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  const ctx2 = document.getElementById("marcks-overview-chart");
+  if (overviewChart) overviewChart.destroy();
+  const totals = {};
+  Object.keys(MARCKS_META).forEach(k => totals[k] = 0);
+  papers.forEach(p => {
+    const a = latestAttempt(p);
+    Object.keys(a.marcks).forEach(k => totals[k] += a.marcks[k]);
+  });
+  overviewChart = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: Object.keys(MARCKS_META).map(k => `${k} - ${MARCKS_META[k].label}`),
+      datasets: [{
+        data: Object.values(totals),
+        backgroundColor: Object.values(MARCKS_META).map(m => m.color),
+        borderRadius: 6,
+        barThickness: 28
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      scales: {
+        x: { ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
+        y: { ticks: { color: "#8888aa" }, grid: { display: false } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ============ PAPER DETAIL MODAL ============
+let currentPaperId = null;
+let currentAttemptIdx = null;
+let addingNewAttempt = false;
+let modalMarcksChart, modalDiffChart, modalRadarChart;
+
+function openPaper(id, mode) {
+  currentPaperId = id;
+  const p = state.papers.find(x => x.id === id);
+  if (!p) return;
+
+  addingNewAttempt = (mode === 'add');
+  currentAttemptIdx = p.attempts.length - 1;
+
+  document.getElementById("modal-title").textContent = p.name;
+  document.getElementById("modal-tag-display").textContent = p.tag || '';
+  document.getElementById("notes-editor").innerHTML = p.notes || '';
+  renderPaperTasks(id);
+
+  renderAttemptPills(p);
+
+  if (addingNewAttempt) {
+    loadAttemptFields(null, true, p);
+  } else {
+    loadAttemptFields(latestAttempt(p), false, p);
+  }
+
+  document.getElementById("modal-overlay").classList.add("open");
+}
+
+function renderAttemptPills(p) {
+  const container = document.getElementById("attempts-pills");
+  let html = p.attempts.map((a, i) => {
+    const pct = scorePct(a);
+    const isActive = !addingNewAttempt && i === currentAttemptIdx;
+    return `<button class="attempt-pill ${isActive ? 'active' : ''}" onclick="selectAttempt(${i})">
+      Attempt ${i + 1}&nbsp;&nbsp;${formatDate(a.date)}&nbsp;&nbsp;${pct.toFixed(0)}%
+    </button>`;
+  }).join("");
+
+  html += `<button class="add-attempt-pill hide-in-viewer ${addingNewAttempt ? 'active' : ''}" onclick="startAddAttempt()">+ Add Attempt</button>`;
+  container.innerHTML = html;
+
+  const heading = document.getElementById("attempt-heading");
+  if (addingNewAttempt) {
+    heading.textContent = `New Attempt #${p.attempts.length + 1}`;
+    heading.style.display = '';
+  } else if (p.attempts.length > 1) {
+    heading.textContent = `Attempt ${currentAttemptIdx + 1} of ${p.attempts.length}`;
+    heading.style.display = '';
+  } else {
+    heading.style.display = 'none';
+  }
+
+  document.getElementById("save-edit-btn").textContent = addingNewAttempt ? "Save New Attempt" : "Save Changes";
+}
+
+function selectAttempt(idx) {
+  addingNewAttempt = false;
+  currentAttemptIdx = idx;
+  const p = state.papers.find(x => x.id === currentPaperId);
+  if (!p) return;
+  renderAttemptPills(p);
+  loadAttemptFields(p.attempts[idx], false, p);
+}
+
+function startAddAttempt() {
+  addingNewAttempt = true;
+  const p = state.papers.find(x => x.id === currentPaperId);
+  if (!p) return;
+  renderAttemptPills(p);
+  loadAttemptFields(null, true, p);
+}
+
+function loadAttemptFields(a, isNew, p) {
+  document.getElementById("edit-name").value = p ? p.name : '';
+
+  if (isNew || !a) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("edit-date").value = todayStr;
+    ["edit-easyScored","edit-easyTotal","edit-mediumScored","edit-mediumTotal","edit-hardScored","edit-hardTotal"].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    Object.keys(MARCKS_META).forEach(k => {
+      document.getElementById("edit-" + k).value = '';
+    });
+    renderModalCharts({
+      date: todayStr,
+      easyScored:0, easyTotal:0, mediumScored:0, mediumTotal:0, hardScored:0, hardTotal:0,
+      marcks:{M:0,A:0,R:0,C:0,K:0,S:0}
+    });
+  } else {
+    document.getElementById("edit-date").value = a.date;
+    document.getElementById("edit-easyScored").value = a.easyScored;
+    document.getElementById("edit-easyTotal").value = a.easyTotal;
+    document.getElementById("edit-mediumScored").value = a.mediumScored;
+    document.getElementById("edit-mediumTotal").value = a.mediumTotal;
+    document.getElementById("edit-hardScored").value = a.hardScored;
+    document.getElementById("edit-hardTotal").value = a.hardTotal;
+    Object.keys(MARCKS_META).forEach(k => {
+      document.getElementById("edit-" + k).value = a.marcks[k];
+    });
+    renderModalCharts(a);
+  }
+}
+
+function renderModalCharts(a) {
+  const pct = scorePct(a);
+  const g = getGrade(pct);
+
+  const ring = document.getElementById("score-ring");
+  const col = scoreColor(pct);
+  ring.style.background = `conic-gradient(${col} ${pct * 3.6}deg, #1a1a3e ${pct * 3.6}deg)`;
+  document.getElementById("score-pct").textContent = pct.toFixed(0) + "%";
+  document.getElementById("score-pct").style.color = col;
+  document.getElementById("modal-grade-letter").textContent = g.grade;
+  document.getElementById("modal-grade-letter").style.color = g.color;
+  document.getElementById("modal-grade-bound").textContent = g.bound;
+
+  const ctx1 = document.getElementById("modal-marcks-chart");
+  if (modalMarcksChart) modalMarcksChart.destroy();
+  const marcksVals = Object.entries(a.marcks).filter(([, v]) => v > 0);
+  if (marcksVals.length) {
+    modalMarcksChart = new Chart(ctx1, {
+      type: "doughnut",
+      data: {
+        labels: marcksVals.map(([k]) => `${k} - ${MARCKS_META[k].label}`),
+        datasets: [{ data: marcksVals.map(([, v]) => v), backgroundColor: marcksVals.map(([k]) => MARCKS_META[k].color), borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, cutout: "55%",
+        plugins: { legend: { position: "bottom", labels: { color: "#e4e4f0", padding: 12, font: { size: 11 } } } }
+      }
+    });
+  } else {
+    modalMarcksChart = null;
+    const c = ctx1.getContext("2d");
+    c.clearRect(0, 0, ctx1.width, ctx1.height);
+  }
+
+  const ctx2 = document.getElementById("modal-diff-chart");
+  if (modalDiffChart) modalDiffChart.destroy();
+  modalDiffChart = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: ["Easy", "Medium", "Hard"],
+      datasets: [
+        { label: "Scored", data: [a.easyScored, a.mediumScored, a.hardScored], backgroundColor: ["#51cf66","#ffa94d","#ff6b6b"], borderRadius: 6 },
+        { label: "Total Available", data: [a.easyTotal, a.mediumTotal, a.hardTotal], backgroundColor: ["#51cf6633","#ffa94d33","#ff6b6b33"], borderColor: ["#51cf66","#ffa94d","#ff6b6b"], borderWidth: 2, borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
+        x: { ticks: { color: "#8888aa" }, grid: { display: false } }
+      },
+      plugins: { legend: { labels: { color: "#e4e4f0" } } }
+    }
+  });
+
+  const ctx3 = document.getElementById("modal-radar-chart");
+  if (modalRadarChart) modalRadarChart.destroy();
+  modalRadarChart = new Chart(ctx3, {
+    type: "radar",
+    data: {
+      labels: Object.keys(MARCKS_META),
+      datasets: [{
+        label: "Marks Lost",
+        data: Object.keys(MARCKS_META).map(k => a.marcks[k]),
+        backgroundColor: "rgba(124,92,252,0.15)",
+        borderColor: "#7c5cfc",
+        pointBackgroundColor: Object.values(MARCKS_META).map(m => m.color),
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          beginAtZero: true,
+          ticks: { color: "#8888aa", backdropColor: "transparent" },
+          grid: { color: "#2a2a5a" },
+          pointLabels: { color: "#e4e4f0", font: { size: 13, weight: "bold" } },
+          angleLines: { color: "#2a2a5a" }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// Live update charts when editing
+const editFields = [
+  "edit-name","edit-date",
+  "edit-easyScored","edit-easyTotal","edit-mediumScored","edit-mediumTotal","edit-hardScored","edit-hardTotal",
+  "edit-M","edit-A","edit-R","edit-C","edit-K","edit-S"
+];
+editFields.forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    if (!currentPaperId) return;
+    renderModalCharts(getAttemptFromFields());
+  });
+});
+
+function getAttemptFromFields() {
+  return {
+    date: document.getElementById("edit-date").value,
+    easyScored: parseFloat(document.getElementById("edit-easyScored").value) || 0,
+    easyTotal: parseFloat(document.getElementById("edit-easyTotal").value) || 0,
+    mediumScored: parseFloat(document.getElementById("edit-mediumScored").value) || 0,
+    mediumTotal: parseFloat(document.getElementById("edit-mediumTotal").value) || 0,
+    hardScored: parseFloat(document.getElementById("edit-hardScored").value) || 0,
+    hardTotal: parseFloat(document.getElementById("edit-hardTotal").value) || 0,
+    marcks: {
+      M: parseFloat(document.getElementById("edit-M").value) || 0,
+      A: parseFloat(document.getElementById("edit-A").value) || 0,
+      R: parseFloat(document.getElementById("edit-R").value) || 0,
+      C: parseFloat(document.getElementById("edit-C").value) || 0,
+      K: parseFloat(document.getElementById("edit-K").value) || 0,
+      S: parseFloat(document.getElementById("edit-S").value) || 0
+    }
+  };
+}
+
+// Save
+document.getElementById("save-edit-btn").addEventListener("click", () => {
+  const p = state.papers.find(x => x.id === currentPaperId);
+  if (!p) return;
+
+  p.name = document.getElementById("edit-name").value.trim() || p.name;
+  p.notes = document.getElementById("notes-editor").innerHTML;
+  syncInlineTasks(currentPaperId);
+  const attemptData = getAttemptFromFields();
+
+  if (addingNewAttempt) {
+    p.attempts.push(attemptData);
+    currentAttemptIdx = p.attempts.length - 1;
+    addingNewAttempt = false;
+  } else {
+    p.attempts[currentAttemptIdx] = attemptData;
+  }
+
+  saveState();
+  closeModal();
+  renderDashboard();
+});
+
+// Delete
+document.getElementById("delete-paper-btn").addEventListener("click", () => {
+  if (!confirm("Delete this paper and all its attempts?")) return;
+  state.papers = state.papers.filter(x => x.id !== currentPaperId);
+  state.tasks = state.tasks.filter(t => t.paperId !== currentPaperId);
+  saveState();
+  closeModal();
+  renderDashboard();
+});
+
+// Close modal
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  currentPaperId = null;
+  currentAttemptIdx = null;
+  addingNewAttempt = false;
+  renderTasksBar();
+}
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-overlay").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-overlay")) closeModal();
+});
+
+// ============ NOTES TOOLBAR ============
+function execNotes(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById("notes-editor").focus();
+}
+function execNotesColor(color) {
+  document.execCommand('foreColor', false, color);
+  document.getElementById("notes-editor").focus();
+}
+
+// ============ TASKS ============
+let activeTasksTab = 'active';
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function insertTaskAtCursor() {
+  const editor = document.getElementById('notes-editor');
+  editor.focus();
+  // Insert "Task: " at cursor on a new line
+  document.execCommand('insertText', false, '\nTask: ');
+}
+
+function syncInlineTasks(paperId) {
+  const editor = document.getElementById('notes-editor');
+  // Normalize HTML: convert block elements and <br> to newlines, then strip tags
+  let html = editor.innerHTML;
+  html = html.replace(/<br\s*\/?>/gi, '\n')
+             .replace(/<div[^>]*>/gi, '\n').replace(/<\/div>/gi, '\n')
+             .replace(/<p[^>]*>/gi, '\n').replace(/<\/p>/gi, '\n')
+             .replace(/<[^>]+>/g, '');
+  // Decode HTML entities (&nbsp; &amp; etc.)
+  const decoder = document.createElement('textarea');
+  decoder.innerHTML = html;
+  const text = decoder.value;
+  const lines = text.split(/\n/);
+  const inlineTexts = [];
+  lines.forEach(line => {
+    const m = line.match(/^Task:\s*(.+)/i);
+    if (m && m[1].trim()) inlineTexts.push(m[1].trim());
+  });
+
+  // Get existing tasks for this paper
+  const existing = state.tasks.filter(t => t.paperId === paperId);
+  const existingTexts = existing.map(t => t.text.toLowerCase());
+
+  // Create tasks for new inline entries (avoid duplicates)
+  let added = false;
+  inlineTexts.forEach(taskText => {
+    if (!existingTexts.includes(taskText.toLowerCase())) {
+      state.tasks.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        paperId: paperId,
+        text: taskText,
+        createdAt: new Date().toISOString().split('T')[0],
+        completed: false,
+        completedAt: null
+      });
+      existingTexts.push(taskText.toLowerCase());
+      added = true;
+    }
+  });
+  if (added) saveState();
+}
+
+function toggleTask(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.completed = !task.completed;
+  task.completedAt = task.completed ? new Date().toISOString().split('T')[0] : null;
+  saveState();
+  if (currentPaperId) renderPaperTasks(currentPaperId);
+  renderTasksBar();
+}
+
+function deleteTask(taskId) {
+  state.tasks = state.tasks.filter(t => t.id !== taskId);
+  saveState();
+  if (currentPaperId) renderPaperTasks(currentPaperId);
+  renderTasksBar();
+}
+
+function renderPaperTasks(paperId) {
+  const container = document.getElementById('paper-tasks-list');
+  const tasks = state.tasks.filter(t => t.paperId === paperId);
+  if (!tasks.length) { container.innerHTML = ''; return; }
+  const sorted = [...tasks.filter(t => !t.completed), ...tasks.filter(t => t.completed)];
+  container.innerHTML = sorted.map(t => `
+    <div class="paper-task-item ${t.completed ? 'completed' : ''}">
+      <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+      <span class="task-text">${escapeHtml(t.text)}</span>
+      <span class="task-date">${formatDate(t.createdAt)}</span>
+      <button class="task-delete" onclick="deleteTask(${t.id})" title="Remove task">&times;</button>
+    </div>
+  `).join('');
+}
+
+function renderTasksBar() {
+  const bar = document.getElementById('tasks-bar');
+  const list = document.getElementById('tasks-list');
+  const empty = document.getElementById('tasks-empty');
+  const allTasks = state.tasks || [];
+  if (!allTasks.length) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  document.getElementById('tasks-tab-active').classList.toggle('active', activeTasksTab === 'active');
+  document.getElementById('tasks-tab-completed').classList.toggle('active', activeTasksTab === 'completed');
+  const filtered = allTasks.filter(t => activeTasksTab === 'active' ? !t.completed : t.completed);
+  filtered.sort((a, b) => {
+    const dateA = activeTasksTab === 'completed' ? (a.completedAt || '') : a.createdAt;
+    const dateB = activeTasksTab === 'completed' ? (b.completedAt || '') : b.createdAt;
+    return dateB.localeCompare(dateA);
+  });
+  if (!filtered.length) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    empty.querySelector('span').textContent = activeTasksTab === 'active'
+      ? 'No active tasks. Nice work!' : 'No completed tasks yet.';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(t => {
+    const paper = state.papers.find(p => p.id === t.paperId);
+    const paperName = paper ? paper.name : '(deleted paper)';
+    const dateLabel = t.completed ? formatDate(t.completedAt) : formatDate(t.createdAt);
+    return `
+      <div class="dash-task-item ${t.completed ? 'completed' : ''}" onclick="openPaperFromTask(${t.paperId})">
+        <input type="checkbox" ${t.completed ? 'checked' : ''} onclick="event.stopPropagation();" onchange="toggleTask(${t.id})">
+        <span class="dash-task-text">${escapeHtml(t.text)}</span>
+        <span class="dash-task-paper">${escapeHtml(paperName)}</span>
+        <span class="dash-task-date">${dateLabel}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function setTasksTab(tab) {
+  activeTasksTab = tab;
+  renderTasksBar();
+}
+
+function openPaperFromTask(paperId) {
+  const paper = state.papers.find(p => p.id === paperId);
+  if (!paper) return;
+  openPaper(paperId);
+  setTimeout(() => {
+    const notes = document.querySelector('.notes-section');
+    if (notes) notes.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+
+// ============ CLOUD SYNC ============
+function getCloudConfig() {
+  return {
+    apiKey: localStorage.getItem('papertrack-api-key') || '',
+    binId: localStorage.getItem('papertrack-bin-id') || ''
+  };
+}
+
+function scheduleCloudSync() {
+  if (isViewerMode) return;
+  const { apiKey, binId } = getCloudConfig();
+  if (!apiKey || !binId) return;
+  if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => pushToCloud(), 2000);
+}
+
+async function pushToCloud() {
+  const { apiKey, binId } = getCloudConfig();
+  if (!apiKey || !binId) return;
+  try {
+    const res = await fetch(JSONBIN_API + '/' + binId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': apiKey
+      },
+      body: JSON.stringify(state)
+    });
+    if (res.ok) {
+      localStorage.setItem('papertrack-last-sync', new Date().toISOString());
+      updateCloudBtnState();
+    }
+  } catch (e) {
+    console.warn('Cloud sync failed:', e);
+  }
+}
+
+async function pullFromCloud(binId) {
+  try {
+    const res = await fetch(JSONBIN_API + '/' + binId + '/latest');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.record;
+  } catch (e) {
+    console.warn('Cloud pull failed:', e);
+    return null;
+  }
+}
+
+async function connectCloud() {
+  const apiKey = document.getElementById('cloud-api-key').value.trim();
+  if (!apiKey) return;
+  const errEl = document.getElementById('cloud-error');
+  errEl.style.display = 'none';
+
+  try {
+    // Create a new public bin with current state
+    const res = await fetch(JSONBIN_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': apiKey,
+        'X-Bin-Private': 'false',
+        'X-Bin-Name': 'PaperTrack'
+      },
+      body: JSON.stringify(state)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      errEl.textContent = err.message || 'Invalid API key or request failed';
+      errEl.style.display = 'block';
+      return;
+    }
+    const data = await res.json();
+    const binId = data.metadata.id;
+
+    localStorage.setItem('papertrack-api-key', apiKey);
+    localStorage.setItem('papertrack-bin-id', binId);
+    localStorage.setItem('papertrack-last-sync', new Date().toISOString());
+
+    updateCloudBtnState();
+    renderCloudPanel();
+  } catch (e) {
+    errEl.textContent = 'Network error — check your connection';
+    errEl.style.display = 'block';
+  }
+}
+
+function disconnectCloud() {
+  if (!confirm('Disconnect cloud sync? Your data stays local but will stop syncing.')) return;
+  localStorage.removeItem('papertrack-api-key');
+  localStorage.removeItem('papertrack-bin-id');
+  localStorage.removeItem('papertrack-last-sync');
+  updateCloudBtnState();
+  closeCloudPanel();
+}
+
+function openCloudPanel() {
+  document.getElementById('cloud-panel-overlay').classList.add('open');
+  renderCloudPanel();
+}
+
+function closeCloudPanel() {
+  document.getElementById('cloud-panel-overlay').classList.remove('open');
+}
+
+function renderCloudPanel() {
+  const { apiKey, binId } = getCloudConfig();
+  const setup = document.getElementById('cloud-setup');
+  const connected = document.getElementById('cloud-connected');
+
+  if (apiKey && binId) {
+    setup.style.display = 'none';
+    connected.style.display = 'block';
+    // Build share link
+    const base = window.location.href.split('?')[0];
+    document.getElementById('share-link').value = base + '?bin=' + binId;
+    // Last synced
+    const last = localStorage.getItem('papertrack-last-sync');
+    if (last) {
+      const ago = Math.round((Date.now() - new Date(last).getTime()) / 60000);
+      document.getElementById('last-synced').innerHTML =
+        ago < 1 ? 'Last synced: <span class="green">just now</span>' :
+        'Last synced: ' + ago + ' min ago';
+    }
+  } else {
+    setup.style.display = 'block';
+    connected.style.display = 'none';
+    document.getElementById('cloud-api-key').value = '';
+    document.getElementById('cloud-error').style.display = 'none';
+  }
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link');
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = input.nextElementSibling;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+function updateCloudBtnState() {
+  const btn = document.getElementById('cloud-btn');
+  if (!btn) return;
+  const { apiKey, binId } = getCloudConfig();
+  btn.classList.toggle('synced', !!(apiKey && binId));
+}
+
+async function initViewerMode() {
+  const params = new URLSearchParams(window.location.search);
+  const binId = params.get('bin');
+  if (!binId) return false;
+
+  isViewerMode = true;
+  document.body.classList.add('viewer-mode');
+
+  const cloudData = await pullFromCloud(binId);
+  if (cloudData) {
+    // Apply cloud data to state
+    Object.assign(state, cloudData);
+    renderDashboard();
+  }
+
+  // Auto-refresh every 60 seconds
+  setInterval(async () => {
+    const fresh = await pullFromCloud(binId);
+    if (fresh) {
+      Object.assign(state, fresh);
+      renderDashboard();
+    }
+  }, 60000);
+
+  return true;
+}
+
+// ============ INIT ============
+updateCloudBtnState();
+renderDashboard();
+populateSelects();
+renderBank();
+
+// Check for viewer mode (async — will re-render if cloud data arrives)
+initViewerMode();
+</script>
+</body>
+</html>
