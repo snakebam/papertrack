@@ -9,18 +9,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0b0b1e;
-      --bg2: #12122a;
-      --card: #1a1a3e;
-      --card-hover: #222255;
-      --border: #2a2a5a;
-      --text: #e4e4f0;
-      --text2: #8888aa;
-      --accent: #7c5cfc;
-      --accent2: #a78bfa;
-      --M: #ff6b6b; --A: #ffa94d; --R: #ffd43b;
-      --C: #51cf66; --K: #339af0; --S: #cc5de8;
-      --good: #22c55e; --mid: #f59e0b; --bad: #ef4444;
+      --bg: #1c1714;
+      --bg2: #231e1a;
+      --card: #2c2520;
+      --card-hover: #362e28;
+      --border: #3e3530;
+      --text: #e8ddd4;
+      --text2: #9a8b7f;
+      --accent: #c4956a;
+      --accent2: #d4a87a;
+      --M: #d98a8a; --A: #d4a57a; --R: #d4c87a;
+      --C: #7abf8e; --K: #7aafcc; --S: #b48ec8;
+      --good: #7abf8e; --mid: #d4a57a; --bad: #d98a8a;
       --radius: 12px;
     }
 
@@ -45,7 +45,7 @@
     }
     header h1 {
       font-size: 1.4rem;
-      background: linear-gradient(135deg, var(--accent), #e040fb);
+      background: linear-gradient(135deg, var(--accent), #d4a87a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       padding: 1rem 0;
@@ -96,7 +96,7 @@
     .stat-card .stat-value {
       font-size: 2rem;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #e040fb);
+      background: linear-gradient(135deg, var(--accent), #d4a87a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -128,7 +128,7 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .paper-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,92,252,0.1); }
+    .paper-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(196,149,106,0.12); }
     .paper-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
     .paper-card-info { flex: 1; min-width: 0; }
     .paper-card .paper-name { font-weight: 600; margin-bottom: 0.5rem; }
@@ -189,7 +189,7 @@
     .attempt-badge {
       display: inline-block;
       font-size: 0.6rem;
-      background: rgba(124,92,252,0.25);
+      background: rgba(196,149,106,0.25);
       color: var(--accent2);
       padding: 1px 6px;
       border-radius: 8px;
@@ -354,7 +354,7 @@
       transition: all 0.2s;
     }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #9333ea);
+      background: linear-gradient(135deg, var(--accent), #a07050);
       color: white;
     }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -405,7 +405,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(20,16,13,0.75);
       z-index: 200;
       display: none;
       align-items: center;
@@ -473,7 +473,7 @@
     }
     .attempt-pill.active {
       border-color: var(--accent);
-      background: rgba(124,92,252,0.12);
+      background: rgba(196,149,106,0.15);
       color: var(--accent2);
       font-weight: 600;
     }
@@ -489,8 +489,8 @@
       color: var(--accent2);
       font-family: inherit;
     }
-    .add-attempt-pill:hover { background: rgba(124,92,252,0.1); border-style: solid; }
-    .add-attempt-pill.active { background: rgba(124,92,252,0.2); border-style: solid; color: var(--accent); font-weight: 600; }
+    .add-attempt-pill:hover { background: rgba(196,149,106,0.12); border-style: solid; }
+    .add-attempt-pill.active { background: rgba(196,149,106,0.22); border-style: solid; color: var(--accent); font-weight: 600; }
 
     .modal-body {
       display: grid;
@@ -504,7 +504,7 @@
       font-weight: 600;
       color: var(--accent2);
       padding: 0.4rem 0.8rem;
-      background: rgba(124,92,252,0.08);
+      background: rgba(196,149,106,0.08);
       border-radius: 6px;
       border-left: 3px solid var(--accent);
     }
@@ -634,8 +634,8 @@
       top: 0; left: 0; right: 0;
       height: 3px;
     }
-    .countdown-card.exam::before { background: linear-gradient(90deg, var(--accent), #e040fb); }
-    .countdown-card.learning::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .countdown-card.exam::before { background: linear-gradient(90deg, var(--accent), #d4a87a); }
+    .countdown-card.learning::before { background: linear-gradient(90deg, #d4a57a, #d98a8a); }
     .countdown-label {
       font-size: 0.72rem;
       text-transform: uppercase;
@@ -656,7 +656,7 @@
       margin-bottom: 0.15rem;
     }
     .countdown-card.exam .countdown-days { color: var(--accent2); }
-    .countdown-card.learning .countdown-days { color: #f59e0b; }
+    .countdown-card.learning .countdown-days { color: #d4a57a; }
     .countdown-sub {
       font-size: 0.75rem;
       color: var(--text2);
@@ -711,7 +711,7 @@
     .chapter-progress-fill {
       height: 100%;
       border-radius: 4px;
-      background: linear-gradient(90deg, var(--accent), #e040fb);
+      background: linear-gradient(90deg, var(--accent), #d4a87a);
       transition: width 0.4s ease;
     }
     .chapter-pace {
@@ -743,7 +743,7 @@
       color: var(--text);
       transition: background 0.15s;
     }
-    .paper-task-item:hover { background: rgba(124,92,252,0.06); }
+    .paper-task-item:hover { background: rgba(196,149,106,0.06); }
     .paper-task-item.completed { text-decoration: line-through; color: var(--text2); }
     .paper-task-item input[type="checkbox"] {
       accent-color: var(--accent);
@@ -861,7 +861,7 @@
 
     /* Viewer mode */
     .viewer-banner {
-      background: linear-gradient(135deg, var(--accent), #e040fb);
+      background: linear-gradient(135deg, var(--accent), #d4a87a);
       color: #fff; text-align: center; padding: 0.6rem 1rem;
       font-size: 0.85rem; font-weight: 600; display: none;
     }
@@ -1244,12 +1244,12 @@
         <button class="notes-btn" onmousedown="event.preventDefault(); execNotes('italic')" title="Italic"><i>I</i></button>
         <button class="notes-btn" onmousedown="event.preventDefault(); execNotes('underline')" title="Underline"><u>U</u></button>
         <span class="notes-divider"></span>
-        <button class="notes-color-btn" style="background:#ff6b6b" onmousedown="event.preventDefault(); execNotesColor('#ff6b6b')" title="M - Maths Error"></button>
-        <button class="notes-color-btn" style="background:#ffa94d" onmousedown="event.preventDefault(); execNotesColor('#ffa94d')" title="A - Application"></button>
-        <button class="notes-color-btn" style="background:#ffd43b" onmousedown="event.preventDefault(); execNotesColor('#ffd43b')" title="R - Read Question"></button>
-        <button class="notes-color-btn" style="background:#51cf66" onmousedown="event.preventDefault(); execNotesColor('#51cf66')" title="C - Communication"></button>
-        <button class="notes-color-btn" style="background:#339af0" onmousedown="event.preventDefault(); execNotesColor('#339af0')" title="K - Knowledge"></button>
-        <button class="notes-color-btn" style="background:#cc5de8" onmousedown="event.preventDefault(); execNotesColor('#cc5de8')" title="S - Statements"></button>
+        <button class="notes-color-btn" style="background:#d98a8a" onmousedown="event.preventDefault(); execNotesColor('#d98a8a')" title="M - Maths Error"></button>
+        <button class="notes-color-btn" style="background:#d4a57a" onmousedown="event.preventDefault(); execNotesColor('#d4a57a')" title="A - Application"></button>
+        <button class="notes-color-btn" style="background:#d4c87a" onmousedown="event.preventDefault(); execNotesColor('#d4c87a')" title="R - Read Question"></button>
+        <button class="notes-color-btn" style="background:#7abf8e" onmousedown="event.preventDefault(); execNotesColor('#7abf8e')" title="C - Communication"></button>
+        <button class="notes-color-btn" style="background:#7aafcc" onmousedown="event.preventDefault(); execNotesColor('#7aafcc')" title="K - Knowledge"></button>
+        <button class="notes-color-btn" style="background:#b48ec8" onmousedown="event.preventDefault(); execNotesColor('#b48ec8')" title="S - Statements"></button>
         <span class="notes-divider"></span>
         <button class="notes-btn" onmousedown="event.preventDefault(); execNotesColor('#e4e4f0')" title="Default color" style="font-size:0.7rem;">Aa</button>
         <span class="notes-divider"></span>
@@ -1345,22 +1345,22 @@ let state = loadState();
 saveState();
 
 const MARCKS_META = {
-  M: { label: "Maths Error", color: "#ff6b6b" },
-  A: { label: "Application", color: "#ffa94d" },
-  R: { label: "Read Question", color: "#ffd43b" },
-  C: { label: "Communication", color: "#51cf66" },
-  K: { label: "Knowledge", color: "#339af0" },
-  S: { label: "Statements", color: "#cc5de8" }
+  M: { label: "Maths Error", color: "#d98a8a" },
+  A: { label: "Application", color: "#d4a57a" },
+  R: { label: "Read Question", color: "#d4c87a" },
+  C: { label: "Communication", color: "#7abf8e" },
+  K: { label: "Knowledge", color: "#7aafcc" },
+  S: { label: "Statements", color: "#b48ec8" }
 };
 
 const GRADE_BOUNDARIES = [
-  { grade: "A*", min: 73.8, color: "#FFD700" },
-  { grade: "A",  min: 63.5, color: "#22c55e" },
-  { grade: "B",  min: 53.5, color: "#3b82f6" },
-  { grade: "C",  min: 43.5, color: "#14b8a6" },
-  { grade: "D",  min: 33.5, color: "#f59e0b" },
-  { grade: "E",  min: 23.8, color: "#ef4444" },
-  { grade: "U",  min: 0,    color: "#6b7280" }
+  { grade: "A*", min: 73.8, color: "#d4c87a" },
+  { grade: "A",  min: 63.5, color: "#7abf8e" },
+  { grade: "B",  min: 53.5, color: "#7aafcc" },
+  { grade: "C",  min: 43.5, color: "#8ab5b0" },
+  { grade: "D",  min: 33.5, color: "#d4a57a" },
+  { grade: "E",  min: 23.8, color: "#d98a8a" },
+  { grade: "U",  min: 0,    color: "#7a706a" }
 ];
 
 function getGrade(pct) {
@@ -1373,7 +1373,7 @@ function getGrade(pct) {
       return { grade: b.grade, color: b.color, bound: bound + " Bound" };
     }
   }
-  return { grade: "U", color: "#6b7280", bound: "" };
+  return { grade: "U", color: "#7a706a", bound: "" };
 }
 
 // ============ HELPERS ============
@@ -1685,8 +1685,8 @@ function renderDashboardCharts() {
       datasets: [{
         label: "Score %",
         data: sorted.map(p => paperScorePct(p).toFixed(1)),
-        borderColor: "#7c5cfc",
-        backgroundColor: "rgba(124,92,252,0.1)",
+        borderColor: "#c4956a",
+        backgroundColor: "rgba(196,149,106,0.12)",
         fill: true,
         tension: 0.3,
         pointBackgroundColor: sorted.map(p => scoreColor(paperScorePct(p))),
@@ -1696,8 +1696,8 @@ function renderDashboardCharts() {
     options: {
       responsive: true,
       scales: {
-        y: { min: 0, max: 100, ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
-        x: { ticks: { color: "#8888aa", maxRotation: 45 }, grid: { display: false } }
+        y: { min: 0, max: 100, ticks: { color: "#9a8b7f" }, grid: { color: "#3e3530" } },
+        x: { ticks: { color: "#9a8b7f", maxRotation: 45 }, grid: { display: false } }
       },
       plugins: { legend: { display: false } }
     }
@@ -1726,8 +1726,8 @@ function renderDashboardCharts() {
       indexAxis: "y",
       responsive: true,
       scales: {
-        x: { ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
-        y: { ticks: { color: "#8888aa" }, grid: { display: false } }
+        x: { ticks: { color: "#9a8b7f" }, grid: { color: "#3e3530" } },
+        y: { ticks: { color: "#9a8b7f" }, grid: { display: false } }
       },
       plugins: { legend: { display: false } }
     }
@@ -1846,7 +1846,7 @@ function renderModalCharts(a) {
 
   const ring = document.getElementById("score-ring");
   const col = scoreColor(pct);
-  ring.style.background = `conic-gradient(${col} ${pct * 3.6}deg, #1a1a3e ${pct * 3.6}deg)`;
+  ring.style.background = `conic-gradient(${col} ${pct * 3.6}deg, #2c2520 ${pct * 3.6}deg)`;
   document.getElementById("score-pct").textContent = pct.toFixed(0) + "%";
   document.getElementById("score-pct").style.color = col;
   document.getElementById("modal-grade-letter").textContent = g.grade;
@@ -1865,7 +1865,7 @@ function renderModalCharts(a) {
       },
       options: {
         responsive: true, cutout: "55%",
-        plugins: { legend: { position: "bottom", labels: { color: "#e4e4f0", padding: 12, font: { size: 11 } } } }
+        plugins: { legend: { position: "bottom", labels: { color: "#e8ddd4", padding: 12, font: { size: 11 } } } }
       }
     });
   } else {
@@ -1881,17 +1881,17 @@ function renderModalCharts(a) {
     data: {
       labels: ["Easy", "Medium", "Hard"],
       datasets: [
-        { label: "Scored", data: [a.easyScored, a.mediumScored, a.hardScored], backgroundColor: ["#51cf66","#ffa94d","#ff6b6b"], borderRadius: 6 },
-        { label: "Total Available", data: [a.easyTotal, a.mediumTotal, a.hardTotal], backgroundColor: ["#51cf6633","#ffa94d33","#ff6b6b33"], borderColor: ["#51cf66","#ffa94d","#ff6b6b"], borderWidth: 2, borderRadius: 6 }
+        { label: "Scored", data: [a.easyScored, a.mediumScored, a.hardScored], backgroundColor: ["#7abf8e","#d4a57a","#d98a8a"], borderRadius: 6 },
+        { label: "Total Available", data: [a.easyTotal, a.mediumTotal, a.hardTotal], backgroundColor: ["#7abf8e33","#d4a57a33","#d98a8a33"], borderColor: ["#7abf8e","#d4a57a","#d98a8a"], borderWidth: 2, borderRadius: 6 }
       ]
     },
     options: {
       responsive: true,
       scales: {
-        y: { ticks: { color: "#8888aa" }, grid: { color: "#2a2a5a" } },
-        x: { ticks: { color: "#8888aa" }, grid: { display: false } }
+        y: { ticks: { color: "#9a8b7f" }, grid: { color: "#3e3530" } },
+        x: { ticks: { color: "#9a8b7f" }, grid: { display: false } }
       },
-      plugins: { legend: { labels: { color: "#e4e4f0" } } }
+      plugins: { legend: { labels: { color: "#e8ddd4" } } }
     }
   });
 
@@ -1904,8 +1904,8 @@ function renderModalCharts(a) {
       datasets: [{
         label: "Marks Lost",
         data: Object.keys(MARCKS_META).map(k => a.marcks[k]),
-        backgroundColor: "rgba(124,92,252,0.15)",
-        borderColor: "#7c5cfc",
+        backgroundColor: "rgba(196,149,106,0.15)",
+        borderColor: "#c4956a",
         pointBackgroundColor: Object.values(MARCKS_META).map(m => m.color),
         pointRadius: 5
       }]
@@ -1915,10 +1915,10 @@ function renderModalCharts(a) {
       scales: {
         r: {
           beginAtZero: true,
-          ticks: { color: "#8888aa", backdropColor: "transparent" },
-          grid: { color: "#2a2a5a" },
-          pointLabels: { color: "#e4e4f0", font: { size: 13, weight: "bold" } },
-          angleLines: { color: "#2a2a5a" }
+          ticks: { color: "#9a8b7f", backdropColor: "transparent" },
+          grid: { color: "#3e3530" },
+          pointLabels: { color: "#e8ddd4", font: { size: 13, weight: "bold" } },
+          angleLines: { color: "#3e3530" }
         }
       },
       plugins: { legend: { display: false } }
